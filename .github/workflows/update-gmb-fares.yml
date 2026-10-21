@@ -1,0 +1,35 @@
+name: Update GMB fares
+
+on:
+  schedule:
+    - cron: "30 22 * * *" # 06:30 HKT daily
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build gmb_fares.json
+        run: python3 scripts/build_gmb_fares.py gmb_fares.json
+      - name: Commit if fares changed
+        run: |
+          # td_generated changes on every TD export; only commit when the fares themselves change
+          if git diff --quiet -- gmb_fares.json; then echo "no change"; exit 0; fi
+          if git show HEAD:gmb_fares.json > /tmp/old.json 2>/dev/null && python3 -c '
+          import json, sys
+          sys.exit(0 if json.load(open("/tmp/old.json"))["fares"] == json.load(open("gmb_fares.json"))["fares"] else 1)
+          '; then
+            echo "only metadata changed"; git checkout -- gmb_fares.json; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gmb_fares.json
+          git commit -m "Update GMB fares ($(date -u +%Y-%m-%d))"
+          git push
