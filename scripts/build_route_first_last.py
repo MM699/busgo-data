@@ -50,10 +50,18 @@ the widest-span variant. KMB multi-serviceType numbers are **not** encoded in th
 (no stable GTFS mapping) — all serviceTypes share that merged window.
 
 Only agencies used by BusGo are emitted (KMB/CTB/LWB/NLB/GMB and joints).
+
+Manual overrides
+----------------
+``overrides/route_first_last_overrides.json`` is merged after the GTFS pass. Override
+``routes`` keys replace GTFS values (extra keys such as ``source`` / ``as_of`` stay in the
+overrides file only and are stripped from the published JSON). Use this for routes missing
+from TD GTFS (e.g. NLB B12).
 """
 from __future__ import annotations
 
 import csv
+import os
 import io
 import json
 import sys
@@ -387,11 +395,52 @@ def build(zf: zipfile.ZipFile) -> dict:
     }
 
 
+def overrides_path() -> str:
+    return os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "overrides",
+        "route_first_last_overrides.json",
+    )
+
+
+def apply_overrides(doc: dict, path: Optional[str] = None) -> int:
+    """Merge manual overrides into doc['routes']. Returns number of keys applied."""
+    ov_path = path or overrides_path()
+    if not os.path.isfile(ov_path):
+        return 0
+    with open(ov_path, encoding="utf-8") as f:
+        ov = json.load(f)
+    raw = ov.get("routes") or {}
+    applied = 0
+    for key, value in raw.items():
+        if not isinstance(value, dict):
+            continue
+        first, last = value.get("first"), value.get("last")
+        if not first or not last:
+            continue
+        doc.setdefault("routes", {})[key] = {
+            "first": first,
+            "last": last,
+            "orig": value.get("orig") or "",
+            "dest": value.get("dest") or "",
+        }
+        applied += 1
+    if applied:
+        doc["routes"] = dict(sorted(doc["routes"].items(), key=lambda kv: kv[0]))
+    return applied
+
+
 def main(out_path: str) -> None:
     print(f"downloading {SOURCE} …", flush=True)
     blob = download_zip()
     with zipfile.ZipFile(io.BytesIO(blob)) as zf:
         doc = build(zf)
+    n = apply_overrides(doc)
+    if n:
+        print(
+            f"applied {n} manual override(s) from overrides/route_first_last_overrides.json",
+            flush=True,
+        )
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(doc, f, separators=(",", ":"), ensure_ascii=False)
         f.write("\n")

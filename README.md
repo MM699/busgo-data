@@ -39,6 +39,16 @@ Each value is `{"first":"HH:MM","last":"HH:MM","orig":"…","dest":"…"}`.
   same company+route+bound are merged (earliest first / latest last).
 - Hours ≥ 24 are stored modulo 24 (e.g. `25:10` → `01:10`).
 
+### Manual overrides
+
+`overrides/route_first_last_overrides.json` is merged after each GTFS build (keys replace
+GTFS). Used for routes missing from TD GTFS:
+
+| Key | first–last | Source |
+| --- | --- | --- |
+| `NLB\|B12\|O` | 06:00–00:30 | NLB news ([detail/649](https://www.nlb.com.hk/news/detail/649)); `/tc/route/117` unavailable when recorded |
+| `NLB\|B12\|I` | 06:00–00:30 | NLB [route/118](https://www.nlb.com.hk/tc/route/118) timetable (皇崗口岸開出 06:00–00:30); both dirs confirmed in news |
+
 URL: https://raw.githubusercontent.com/MM699/busgo-data/main/route_first_last.json
 
 ## Data source
