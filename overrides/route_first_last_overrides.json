@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "note": "Manual first/last overlays merged after TD GTFS build. Override keys replace GTFS values.",
+  "routes": {
+    "NLB|B12|O": {
+      "first": "06:00",
+      "last": "00:30",
+      "orig": "烏溪沙站",
+      "dest": "皇崗口岸",
+      "source": "NLB news https://www.nlb.com.hk/news/detail/649 (both dirs daily 06:00–00:30); /tc/route/117 was unavailable when recorded",
+      "as_of": "2026-11-05"
+    },
+    "NLB|B12|I": {
+      "first": "06:00",
+      "last": "00:30",
+      "orig": "皇崗口岸",
+      "dest": "烏溪沙站",
+      "source": "NLB https://www.nlb.com.hk/tc/route/118 timetable (皇崗口岸開出 06:00–00:30 daily); same window confirmed for both dirs in news/detail/649",
+      "as_of": "2026-11-05"
+    }
+  }
+}
